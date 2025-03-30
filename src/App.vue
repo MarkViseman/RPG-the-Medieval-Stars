@@ -45,74 +45,100 @@ export default {
       starCrystal: { x: 8, y: 4 }
     }
   },
+  created() {
+    console.log('App created - initializing game');
+    // Load saved progress
+    this.loadProgress();
+  },
+  mounted() {
+    console.log('App mounted - ready to play');
+    document.addEventListener('keydown', this.handleKeyPress);
+  },
+  beforeUnmount() {
+    document.removeEventListener('keydown', this.handleKeyPress);
+  },
   methods: {
     handleKeyPress(event) {
-      const speed = 1
+      const speed = 1;
       switch (event.key) {
         case 'ArrowUp':
         case 'w':
-          this.playerPosition.y -= speed
-          break
+          this.playerPosition.y -= speed;
+          break;
         case 'ArrowDown':
         case 's':
-          this.playerPosition.y += speed
-          break
+          this.playerPosition.y += speed;
+          break;
         case 'ArrowLeft':
         case 'a':
-          this.playerPosition.x -= speed
-          break
+          this.playerPosition.x -= speed;
+          break;
         case 'ArrowRight':
         case 'd':
-          this.playerPosition.x += speed
-          break
+          this.playerPosition.x += speed;
+          break;
       }
-      this.checkCollisions()
-      this.checkWinCondition()
-      this.saveProgress()
+      this.checkCollisions();
+      this.checkWinCondition();
+      this.saveProgress();
     },
     useFlameSlash() {
       if (this.abilities.flameSlash.cooldown === 0) {
+        console.log('Using Flame Slash');
         // Implement flame slash logic
-        this.abilities.flameSlash.cooldown = this.abilities.flameSlash.maxCooldown
+        this.abilities.flameSlash.cooldown = this.abilities.flameSlash.maxCooldown;
       }
     },
     useEmberShield() {
       if (!this.abilities.emberShield.active) {
-        this.abilities.emberShield.active = true
-        this.abilities.emberShield.duration = 5
+        console.log('Using Ember Shield');
+        this.abilities.emberShield.active = true;
+        this.abilities.emberShield.duration = 5;
       }
     },
     useFireLeap() {
       if (this.abilities.fireLeap.cooldown === 0) {
+        console.log('Using Fire Leap');
         // Implement fire leap logic
-        this.abilities.fireLeap.cooldown = this.abilities.fireLeap.maxCooldown
+        this.abilities.fireLeap.cooldown = this.abilities.fireLeap.maxCooldown;
       }
     },
     checkCollisions() {
       // Implement collision detection with obstacles
+      console.log('Checking collisions at position', this.playerPosition);
     },
     checkWinCondition() {
       if (this.playerPosition.x === this.starCrystal.x && 
           this.playerPosition.y === this.starCrystal.y) {
-        alert('Level Complete! You found the Star Crystal!')
-        this.saveProgress()
+        alert('Level Complete! You found the Star Crystal!');
+        this.saveProgress();
       }
     },
     saveProgress() {
-      localStorage.setItem('gameProgress', JSON.stringify({
-        playerPosition: this.playerPosition,
-        playerHealth: this.playerHealth,
-        abilities: this.abilities
-      }))
-    }
-  },
-  mounted() {
-    const savedProgress = localStorage.getItem('gameProgress')
-    if (savedProgress) {
-      const progress = JSON.parse(savedProgress)
-      this.playerPosition = progress.playerPosition
-      this.playerHealth = progress.playerHealth
-      this.abilities = progress.abilities
+      try {
+        localStorage.setItem('gameProgress', JSON.stringify({
+          playerPosition: this.playerPosition,
+          playerHealth: this.playerHealth,
+          abilities: this.abilities
+        }));
+        console.log('Game progress saved');
+      } catch (error) {
+        console.error('Error saving game progress:', error);
+      }
+    },
+    loadProgress() {
+      try {
+        const savedProgress = localStorage.getItem('gameProgress');
+        if (savedProgress) {
+          const progress = JSON.parse(savedProgress);
+          this.playerPosition = progress.playerPosition;
+          this.playerHealth = progress.playerHealth;
+          this.abilities = progress.abilities;
+          console.log('Game progress loaded');
+        }
+      } catch (error) {
+        console.error('Error loading game progress:', error);
+      }
     }
   }
 }
@@ -127,6 +153,7 @@ export default {
   min-height: 100vh;
   background-color: #1a1a1a;
   color: #ffffff;
+  padding: 20px;
 }
 
 * {

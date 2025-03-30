@@ -19,14 +19,27 @@
         flex-direction: column;
         align-items: center;
         padding: 20px;
+        min-height: 100vh;
+      }
+      .loading {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        width: 100%;
+        font-size: 24px;
+        color: #ff8800;
       }
     </style>
+    <script src="<%= BASE_URL %>index.js"></script>
   </head>
   <body>
     <noscript>
       <strong>We're sorry but this game doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
     </noscript>
-    <div id="app"></div>
+    <div id="app">
+      <div class="loading">Loading Flint the Ember Knight...</div>
+    </div>
     <!-- built files will be auto injected -->
   </body>
 </html> 
