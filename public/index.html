@@ -30,8 +30,22 @@
         font-size: 24px;
         color: #ff8800;
       }
+      .loading.hidden {
+        display: none;
+      }
+      noscript {
+        display: block;
+        text-align: center;
+        padding: 20px;
+        background-color: #ff4444;
+        color: white;
+        font-weight: bold;
+      }
     </style>
-    <script src="<%= BASE_URL %>index.js"></script>
+    <script>
+      // Check if JavaScript is enabled
+      document.documentElement.classList.add('js-enabled');
+    </script>
   </head>
   <body>
     <noscript>

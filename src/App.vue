@@ -1,18 +1,21 @@
 <template>
   <div class="game-container">
-    <GameHUD :health="playerHealth" :abilities="abilities" />
-    <GameBoard 
-      :player-position="playerPosition"
-      :obstacles="obstacles"
-      :star-crystal="starCrystal"
-      @keydown="handleKeyPress"
-      tabindex="0"
-    />
-    <PlayerControls 
-      @flame-slash="useFlameSlash"
-      @ember-shield="useEmberShield"
-      @fire-leap="useFireLeap"
-    />
+    <div v-if="isLoading" class="loading">Loading game...</div>
+    <template v-else>
+      <GameHUD :health="playerHealth" :abilities="abilities" />
+      <GameBoard 
+        :player-position="playerPosition"
+        :obstacles="obstacles"
+        :star-crystal="starCrystal"
+        @keydown="handleKeyPress"
+        tabindex="0"
+      />
+      <PlayerControls 
+        @flame-slash="useFlameSlash"
+        @ember-shield="useEmberShield"
+        @fire-leap="useFireLeap"
+      />
+    </template>
   </div>
 </template>
 
@@ -30,6 +33,7 @@ export default {
   },
   data() {
     return {
+      isLoading: true,
       playerPosition: { x: 0, y: 0 },
       playerHealth: 100,
       abilities: {
@@ -53,6 +57,10 @@ export default {
   mounted() {
     console.log('App mounted - ready to play');
     document.addEventListener('keydown', this.handleKeyPress);
+    // Hide loading state after a short delay
+    setTimeout(() => {
+      this.isLoading = false;
+    }, 1000);
   },
   beforeUnmount() {
     document.removeEventListener('keydown', this.handleKeyPress);

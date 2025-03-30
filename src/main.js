@@ -1,6 +1,14 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 
+// Remove the noscript message if JavaScript is enabled
+document.addEventListener('DOMContentLoaded', () => {
+  const noscript = document.querySelector('noscript');
+  if (noscript) {
+    noscript.style.display = 'none';
+  }
+});
+
 // Error handling to help diagnose production issues
 window.addEventListener('error', function(event) {
   console.error('Global error:', event.error);
