@@ -41,7 +41,17 @@ export default {
       },
       isCollectingCrystal: false,
       crystalParticles: [],
-      crystalTime: 0
+      crystalTime: 0,
+      enemy: {
+        x: 0,
+        y: 0,
+        active: false,
+        speed: 2.0,
+        size: 60,
+        sprite: null,
+        spriteLoaded: false
+      },
+      gameOver: false
     }
   },
   mounted() {
@@ -55,12 +65,22 @@ export default {
       this.spriteLoaded = true;
     };
     this.playerSprite.src = '/flint_the_ember_knight.png';
+
+    // Load enemy sprite
+    this.enemy.sprite = new Image();
+    this.enemy.sprite.onload = () => {
+      this.enemy.spriteLoaded = true;
+    };
+    this.enemy.sprite.src = '/water_enemy.png';
     
     this.startGameLoop();
     
     // Set initial player position based on grid
     this.playerX = this.gridPosition.x * this.gridSize;
     this.playerY = this.gridPosition.y * this.gridSize;
+
+    // Spawn enemy immediately
+    this.spawnEnemy();
   },
   beforeUnmount() {
     window.removeEventListener('keydown', this.handleKeyPress);
@@ -72,8 +92,14 @@ export default {
     handleKeyPress(event) {
       const key = event.key.toLowerCase();
       
+      // Handle game over restart
+      if (this.gameOver && key === ' ') {
+        this.restartGame();
+        return;
+      }
+      
       // Prevent default browser scrolling
-      if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd', 'f'].includes(key)) {
+      if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd', 'f', ' '].includes(key)) {
         event.preventDefault();
       }
       
@@ -193,6 +219,36 @@ export default {
           return particle.life > 0;
         });
 
+        // Update enemy position if active
+        if (this.enemy.active && !this.starCrystal.collected) {
+          // Calculate direction to player
+          const dx = this.playerX - this.enemy.x;
+          const dy = this.playerY - this.enemy.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          // Move enemy towards player
+          if (distance > 0) {
+            this.enemy.x += (dx / distance) * this.enemy.speed;
+            this.enemy.y += (dy / distance) * this.enemy.speed;
+          }
+
+          // Check collision with player
+          const playerCenterX = this.playerX + this.playerSize / 2;
+          const playerCenterY = this.playerY + this.playerSize / 2;
+          const enemyCenterX = this.enemy.x + this.enemy.size / 2;
+          const enemyCenterY = this.enemy.y + this.enemy.size / 2;
+          
+          const collisionDistance = (this.playerSize + this.enemy.size) / 2;
+          const actualDistance = Math.sqrt(
+            Math.pow(playerCenterX - enemyCenterX, 2) + 
+            Math.pow(playerCenterY - enemyCenterY, 2)
+          );
+
+          if (actualDistance < collisionDistance) {
+            this.gameOver = true;
+          }
+        }
+
         // Check for crystal collection
         if (!this.starCrystal.collected && !this.isCollectingCrystal) {
           const playerGridX = Math.round(this.playerX / this.gridSize);
@@ -200,6 +256,8 @@ export default {
           
           if (playerGridX === this.starCrystal.x && playerGridY === this.starCrystal.y) {
             this.collectCrystal();
+            // Make enemy disappear when crystal is collected
+            this.enemy.active = false;
           }
         }
 
@@ -392,6 +450,27 @@ export default {
       this.ctx.fillStyle = '#333';
       this.ctx.fillRect(0, 300, this.canvas.width, 2);
       
+      // Draw enemy if active
+      if (this.enemy.active) {
+        if (this.enemy.spriteLoaded) {
+          this.ctx.drawImage(
+            this.enemy.sprite,
+            this.enemy.x,
+            this.enemy.y,
+            this.enemy.size,
+            this.enemy.size
+          );
+        } else {
+          this.ctx.fillStyle = '#ff0000';
+          this.ctx.fillRect(
+            this.enemy.x,
+            this.enemy.y,
+            this.enemy.size,
+            this.enemy.size
+          );
+        }
+      }
+      
       // Draw particles
       this.particles.forEach(particle => {
         const gradient = this.ctx.createRadialGradient(
@@ -434,6 +513,20 @@ export default {
       }
       
       this.ctx.restore();
+
+      // Draw game over screen
+      if (this.gameOver) {
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.font = '48px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('Game Over', this.canvas.width / 2, this.canvas.height / 2 - 50);
+        
+        this.ctx.font = '24px Arial';
+        this.ctx.fillText('Press SPACE to restart', this.canvas.width / 2, this.canvas.height / 2 + 50);
+      }
     },
     collectCrystal() {
       this.isCollectingCrystal = true;
@@ -452,6 +545,32 @@ export default {
           life: 1
         });
       }
+    },
+    spawnEnemy() {
+      // Find a random position near the star crystal
+      const radius = 3; // Maximum distance from star crystal
+      const angle = Math.random() * Math.PI * 2;
+      
+      this.enemy.x = (this.starCrystal.x + Math.cos(angle) * radius) * this.gridSize;
+      this.enemy.y = (this.starCrystal.y + Math.sin(angle) * radius) * this.gridSize;
+      this.enemy.active = true;
+    },
+    restartGame() {
+      // Reset game state
+      this.gameOver = false;
+      this.starCrystal.collected = false;
+      this.isCollectingCrystal = false;
+      this.crystalParticles = [];
+      this.crystalTime = 0;
+      this.enemy.active = false;
+      
+      // Reset player position
+      this.gridPosition = { x: 10, y: 7 };
+      this.playerX = this.gridPosition.x * this.gridSize;
+      this.playerY = this.gridPosition.y * this.gridSize;
+      
+      // Spawn enemy immediately on restart
+      this.spawnEnemy();
     }
   }
 }
