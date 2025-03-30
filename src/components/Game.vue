@@ -47,11 +47,12 @@ export default {
         y: 0,
         active: false,
         speed: 2.0,
-        size: 60,
+        size: 40,
         sprite: null,
         spriteLoaded: false
       },
-      gameOver: false
+      gameOver: false,
+      showWinScreen: false
     }
   },
   mounted() {
@@ -97,9 +98,15 @@ export default {
         this.restartGame();
         return;
       }
+
+      // Handle next level (restart for now)
+      if (this.showWinScreen && key === 'n') {
+        this.restartGame();
+        return;
+      }
       
       // Prevent default browser scrolling
-      if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd', 'f', ' '].includes(key)) {
+      if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd', 'f', ' ', 'n'].includes(key)) {
         event.preventDefault();
       }
       
@@ -443,8 +450,10 @@ export default {
       this.drawGrid();
       this.drawObstacles();
       
-      // Draw star crystal
-      this.drawStarCrystal();
+      // Draw star crystal if not collected
+      if (!this.starCrystal.collected) {
+        this.drawStarCrystal();
+      }
       
       // Draw ground
       this.ctx.fillStyle = '#333';
@@ -527,6 +536,76 @@ export default {
         this.ctx.font = '24px Arial';
         this.ctx.fillText('Press SPACE to restart', this.canvas.width / 2, this.canvas.height / 2 + 50);
       }
+
+      // Draw win screen
+      if (this.showWinScreen) {
+        // Create a gradient background
+        const gradient = this.ctx.createLinearGradient(0, 0, this.canvas.width, this.canvas.height);
+        gradient.addColorStop(0, 'rgba(0, 100, 255, 0.9)');
+        gradient.addColorStop(1, 'rgba(0, 200, 255, 0.9)');
+        this.ctx.fillStyle = gradient;
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
+        // Draw congratulations text
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.font = '48px Arial';
+        this.ctx.textAlign = 'center';
+        this.ctx.fillText('Level Complete!', this.canvas.width / 2, this.canvas.height / 2 - 80);
+        
+        // Draw star particles
+        for (let i = 0; i < 5; i++) {
+          const x = this.canvas.width / 2 + Math.cos(this.crystalTime * 2 + i * Math.PI * 0.4) * 50;
+          const y = this.canvas.height / 2 - 20 + Math.sin(this.crystalTime * 2 + i * Math.PI * 0.4) * 20;
+          this.drawStar(x, y, 15, '#ffff00');
+        }
+        
+        // Draw next level button
+        this.ctx.fillStyle = '#4CAF50';
+        const buttonWidth = 200;
+        const buttonHeight = 50;
+        const buttonX = this.canvas.width / 2 - buttonWidth / 2;
+        const buttonY = this.canvas.height / 2 + 50;
+        
+        this.ctx.fillRect(buttonX, buttonY, buttonWidth, buttonHeight);
+        
+        this.ctx.fillStyle = '#ffffff';
+        this.ctx.font = '24px Arial';
+        this.ctx.fillText('Press N for Next Level', this.canvas.width / 2, buttonY + 32);
+      }
+    },
+    drawStar(x, y, size, color) {
+      this.ctx.save();
+      this.ctx.beginPath();
+      this.ctx.translate(x, y);
+      this.ctx.rotate(this.crystalTime);
+      
+      for (let i = 0; i < 5; i++) {
+        const angle = (Math.PI * 2 * i) / 5 - Math.PI / 2;
+        const nextAngle = (Math.PI * 2 * (i + 1)) / 5 - Math.PI / 2;
+        
+        const innerRadius = size * 0.4;
+        const outerRadius = size;
+        
+        const startX = Math.cos(angle) * outerRadius;
+        const startY = Math.sin(angle) * outerRadius;
+        
+        const midX = Math.cos((angle + nextAngle) / 2) * innerRadius;
+        const midY = Math.sin((angle + nextAngle) / 2) * innerRadius;
+        
+        const endX = Math.cos(nextAngle) * outerRadius;
+        const endY = Math.sin(nextAngle) * outerRadius;
+        
+        if (i === 0) {
+          this.ctx.moveTo(startX, startY);
+        }
+        this.ctx.lineTo(midX, midY);
+        this.ctx.lineTo(endX, endY);
+      }
+      
+      this.ctx.closePath();
+      this.ctx.fillStyle = color;
+      this.ctx.fill();
+      this.ctx.restore();
     },
     collectCrystal() {
       this.isCollectingCrystal = true;
@@ -545,6 +624,11 @@ export default {
           life: 1
         });
       }
+
+      // Show win screen after a short delay
+      setTimeout(() => {
+        this.showWinScreen = true;
+      }, 1000);
     },
     spawnEnemy() {
       // Find a random position near the star crystal
@@ -558,6 +642,7 @@ export default {
     restartGame() {
       // Reset game state
       this.gameOver = false;
+      this.showWinScreen = false;
       this.starCrystal.collected = false;
       this.isCollectingCrystal = false;
       this.crystalParticles = [];
