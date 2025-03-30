@@ -30,7 +30,7 @@
           <span class="action">Ember Shield</span>
         </div>
         <div class="control-item">
-          <span class="key">W</span>
+          <span class="key">F</span>
           <span class="action">Fire Leap</span>
         </div>
       </div>
@@ -49,20 +49,18 @@ export default {
   },
   methods: {
     handleKeyPress(event) {
-      switch (event.key) {
+      switch (event.key.toLowerCase()) {
         case ' ':
           event.preventDefault()
           this.$emit('flame-slash')
           break
-        case 'Shift':
+        case 'shift':
           event.preventDefault()
           this.$emit('ember-shield')
           break
-        case 'w':
-          if (event.shiftKey) {
-            event.preventDefault()
-            this.$emit('fire-leap')
-          }
+        case 'f':
+          event.preventDefault()
+          this.$emit('fire-leap')
           break
       }
     }
