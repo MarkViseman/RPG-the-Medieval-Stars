@@ -35,5 +35,15 @@ module.exports = defineConfig({
         }
         return args
       })
+
+    config.optimization.splitChunks({
+      cacheGroups: {
+        vendor: {
+          test: /[\\/]node_modules[\\/]/,
+          name: 'vendors',
+          chunks: 'all'
+        }
+      }
+    })
   }
 }) 
